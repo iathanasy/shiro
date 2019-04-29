@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎页</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script src="/static/layui/layui.js?s=36"></script>
+    <script src="/static/js/baseConfig.js"></script>
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend>系统参数</legend>
+</fieldset>
+
+    <table class="layui-table">
+        <colgroup>
+            <col width="20%">
+            <col width="70%">
+        </colgroup>
+        <thead>
+        <tr>
+            <th>名称</th>
+            <th>说明</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>系统</td>
+            <td><span id="os">Windows 10 amd64</span></td>
+        </tr>
+        <tr>
+            <td>Java版本</td>
+            <td><span id="version">1.8.0_191-b12</span></td>
+        </tr>
+        <!--<tr>
+            <td>运行时信息</td>
+            <td><span id="run"></span></td>
+        </tr>-->
+        </tbody>
+    </table>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend>系统统计</legend>
+</fieldset>
+<table class="layui-table">
+    <colgroup>
+        <col width="20%">
+        <col width="20%">
+        <col width="60%">
+    </colgroup>
+    <thead>
+    <tr>
+        <th>名称</th>
+        <th>统计</th>
+        <th>说明</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>用户数</td>
+        <td><span id="user">0</span></td>
+        <td>系统用户数量</td>
+    </tr>
+    <tr>
+        <td>角色数</td>
+        <td><span id="role">0</span></td>
+        <td>系统角色数量</td>
+    </tr><tr>
+        <td>菜单数</td>
+        <td><span id="menu">0</span></td>
+        <td>系统菜单数量</td>
+    </tr>
+    <tr>
+        <td>日志数</td>
+        <td><span id="log">0</span></td>
+        <td>系统日志数量</td>
+    </tr>
+
+    </tbody>
+</table>
+
+</body>
+<script>
+    layui.use(['jquery'],function(){
+        $ = layui.jquery;
+        //Ajax调用处理
+        $.ajax({
+            type: "POST",
+            url: baseUrl + "sys/count",//请求url
+            success: function(data){
+                if(data.code == 0){
+                    $("#version").html(data.version);
+                    $("#os").html(data.os);
+
+                    $("#user").html(data.user);
+                    $("#role").html(data.role);
+                    $("#menu").html(data.menu);
+                    $("#log").html(data.log);
+                }
+            }
+        });
+    });
+
+
+</script>
+</html>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cd.shiro.modules.sys.dao.SysRoleMenuDao">
+	<select id="queryMenuIdList" resultType="long">
+		select menu_id from sys_role_menu where role_id = #{value}
+	</select>
+
+	<select id="queryMenuIdButtonList" resultType="long">
+		select rm.menu_id from sys_role_menu AS rm
+		LEFT JOIN sys_menu m ON m.menu_id = rm.menu_id
+		where m.type = 2 AND rm.role_id = #{value}
+	</select>
+
+
+
+	<delete id="deleteBatch">
+		delete from sys_role_menu where role_id in
+		<foreach item="roleId" collection="array" open="(" separator="," close=")">
+			#{roleId}
+		</foreach>
+	</delete>
+
+</mapper>

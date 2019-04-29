@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单列表</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body>
+<!--头部工具栏-->
+<div class="toolbar">
+    <button class="layui-btn" data-type="add">添加</button>
+    <button class="layui-btn layui-btn-primary" data-type="openAll">全部展开</button>
+    <button class="layui-btn layui-btn-primary" data-type="closeAll">全部关闭</button>
+<!--    <button class="layui-btn" data-type="reload">刷新</button>-->
+</div>
+<!--表单数据 lay-size="sm"-->
+<table class="layui-table layui-form" id="menuList" lay-filter="menuFilter"></table>
+
+<!---操作-->
+<script type="text/html" id="barTpl">
+    <a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-sm" lay-event="del">删除</a>
+</script>
+
+<script src="/static/layui/layui.js?s=36"></script>
+<script src= "/static/js/baseConfig.js"></script>
+<script>
+    var dataId;//全局数据变量
+    layui.config({
+        base: '/static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['table','baseAjax','treeTable','form'], function(){
+        $ = layui.jquery;
+        var table = layui.table;
+        var form = layui.form;
+        var treeTable = layui.treeTable;
+        //实例
+        var re = treeTable.render({
+            elem: '#menuList'
+            ,url: baseUrl + "sys/menu/list" //数据接口
+            ,icon_key: 'name'// 必须
+            ,primary_key: 'menuId'
+            ,parent_key: 'parentId'
+            ,is_click_icon: false
+            ,is_checkbox: true
+            ,end: function(e){
+                form.render();
+            },
+            cols: [
+                {key: 'name', title: '名称', width: '160px',
+                    /*template: function(item){
+                        if(item.level == 0){
+                            return '<span style="color:red;">'+item.name+'</span>';
+                        }else if(item.level == 1){
+                            return '<span style="color:green;">'+item.name+'</span>';
+                        }else if(item.level == 2){
+                            return '<span style="color:#aaa;">'+item.name+'</span>';
+                        }
+                    }*/
+                },
+                {key: 'parentName', title: '上级菜单', width: '100px', align: 'center',
+                    template: function(item){
+                        return item.parentName == null ? '' : item.parentName;
+                    }
+                },
+                {key: 'icon', title: '图标', width: '100px', align: 'center',
+                    template: function(item){
+                        return item.icon == null ? '' : item.icon;
+                    }
+                },
+                {key: 'type', title: '类型', width: '100px', align: 'center',
+                    template: function(item){
+                        if(item.type === 0){
+                            return '<span class="layui-btn layui-btn-sm layui-btn-normal">目录</span>';
+                        }
+                        if(item.type === 1){
+                            return '<span class="layui-btn layui-btn-sm">菜单</span>';
+                        }
+                        if(item.type === 2){
+                            return '<span class="layui-btn layui-btn-sm layui-btn-warm">按钮</span>';
+                        }
+                    }
+                },
+                {key: 'orderNum', title: '排序号', width: '100px', align: 'center'},
+                {key: 'url', title: '菜单URL', width:'160px', align: 'center',
+                    template: function(item){
+                        return item.url == null ? '' : item.url;
+                    }
+                },
+                {key: 'perms', title: '授权标识', align: 'center',
+                    template: function(item){
+                        return item.perms == null ? '' : item.perms;
+                    }
+                },
+                {
+                    title: '操作',
+                    align: 'center',
+                    width: '160px',
+                    template: function(item){
+                        return '<a class="layui-btn layui-btn-sm" lay-filter="edit">编辑</a> <a class="layui-btn layui-btn-sm" lay-filter="del">删除</a>';
+                    }
+                }
+            ]
+        });
+
+        //工具栏
+        var active = {
+            //刷新 刷新重载树表（一般在异步处理数据后刷新显示）
+            /*reload: function(){
+                treeTable.render(re);
+            },*/
+            add: function(){
+                layer.open({
+                    type: 2,
+                    title: '添加菜单',
+                    shadeClose: true,
+                    area: ['766px', '745px'],
+                    content: 'add.html' //iframe的url
+                });
+            }
+            //全部展开
+            ,openAll: function(){
+                treeTable.openAll(re);
+            }
+            //全部关闭
+            ,closeAll: function(){
+                treeTable.closeAll(re);
+            }
+        };
+        //点击事件
+        $('.toolbar .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+
+        // 监听操作修改
+        treeTable.on('tree(edit)',function(data){
+            //console.log(JSON.stringify(data));
+            dataId = data.item.menuId;
+            layer.open({
+                type: 2,
+                title: '编辑菜单',
+                shadeClose: true,
+                area: ['766px', '745px'],
+                content: 'edit.html' //iframe的url
+            });
+        });
+        // 监听操作删除
+        treeTable.on('tree(del)',function(data){
+            //console.log(JSON.stringify(data));
+            var menuId = data.item.menuId;
+            layer.confirm('确定要删除菜单吗？', function(index){
+                $.post(baseUrl + "sys/menu/delete?menuId="+ menuId, function(res){
+                    if(res.code == 0){
+                        layer.msg('操作成功', {
+                            offset: '15px',
+                            icon: 1,
+                            time: 1000
+                        },function(){
+                            //刷新表格
+                            treeTable.render(re);
+                        });
+                    }else{
+                        layer.msg(res.msg, {
+                            offset: '15px',
+                            icon: 5,
+                            time: 1000
+                        });
+                    }
+                },'json');
+            });
+        });
+
+    });
+</script>
+</body>
+</html>

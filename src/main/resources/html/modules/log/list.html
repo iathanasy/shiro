@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>日志列表</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body>
+<!--头部工具栏-->
+<div class="toolbar">
+    <div class="layui-inline" style="margin-left: 12px">
+        <input class="layui-input" name="key" id="key" autocomplete="off" placeholder="用户名/用户操作">
+    </div>
+    <button class="layui-btn" id="sok" data-type="reload">搜索</button>
+    <button class="layui-btn" data-type="del">删除</button>
+</div>
+<!--表单数据-->
+<table id="logList" lay-filter="logFilter"></table>
+
+<script src="/static/layui/layui.js?s=36"></script>
+<script src= "/static/js/baseConfig.js"></script>
+<script>
+    var dataId;//全局数据变量
+    layui.config({
+        base: '/static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['table','baseAjax'], function(){
+        $ = layui.jquery;
+        var table = layui.table;
+        //实例
+        table.render({
+            elem: '#logList'
+            ,url: baseUrl + "/sys/log/list" //数据接口
+            ,page: true //开启分页
+            ,limit:10 //每页几条
+            ,even: true //开启隔行背景
+            ,cols: [[ //表头
+                 {type:'checkbox'}
+                ,{type:'numbers'}
+                ,{field: 'id', title: 'ID', width:80, hide: true}
+                ,{field: 'username', title: '用户名', width:120}
+                ,{field: 'operation', title: '用户操作', width:120}
+                ,{field: 'method', title: '请求方法', width: 120}
+                ,{field: 'params', title: '请求参数', minWidth: 100}
+                ,{field: 'time', title: '执行时长(毫秒)', width:110,sort: true}
+                ,{field: 'ip', title: 'IP', width:110, align:"center"}
+                ,{field: 'createDate', title: '创建时间', width: 180}
+            ]]
+            ,parseData: function(res) { //res 即为原始返回的数据
+                    if(res.code == 0)
+                        return {
+                            "code": res.code,//解析接口状态
+                            "msg": res.msg, //解析提示文本
+                            "count": res.page.totalCount, //解析数据长度
+                            "data": res.page.list //解析数据列表
+                        };
+                    else{
+                    return {
+                        "code": res.code,//解析接口状态
+                        "msg": res.msg //解析提示文本
+                    };
+                }
+            }
+        });
+
+        //工具栏
+        var active = {
+            reload: function(){
+                var key = $("#key").val();
+                //执行重载
+                table.reload('logList', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        key: key
+                    }
+                });
+            }
+            ,del: function(){
+                var checkStatus = table.checkStatus('logList')
+                    ,data = checkStatus.data;
+                var logIds= [];
+                layui.each(data, function(indx, item){
+                    logIds.push(item.id);
+                });
+                //console.log(logIds);
+                layer.confirm('确定要删除日志吗？', function(index){
+                    $.post(baseUrl + "sys/log/delete",JSON.stringify(logIds),function(res){
+                        if(res.code == 0){
+                            layer.msg('操作成功', {
+                                offset: '15px',
+                                icon: 1,
+                                time: 1000
+                            },function(){
+                                //刷新表格
+                                table.reload('logList');
+                            });
+                        }else{
+                            layer.msg(res.msg, {
+                                offset: '15px',
+                                icon: 5,
+                                time: 1000
+                            });
+                        }
+                    },'json');
+                });
+            }
+        };
+        //搜索回车
+        document.onkeydown = function(e){
+            var ev =document.all ? window.event : e;
+            if(ev.keyCode==13) {
+                $('#sok').trigger("click");
+                return false
+            }
+        }
+        //点击事件
+        $('.toolbar .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+    });
+</script>
+</body>
+</html>

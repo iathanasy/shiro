@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>角色列表</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        <!--表格自适应-->
+        .layui-table[lay-skin=line] {
+            border-width: 0 0 0 0 !important;
+            width:100%;
+        }
+    </style>
+</head>
+<body>
+<!--头部工具栏-->
+<div class="toolbar">
+    <button class="layui-btn" data-type="add">添加</button>
+    <div class="layui-inline" style="margin-left: 12px">
+        <input class="layui-input" name="key" id="key" autocomplete="off" placeholder="名称">
+    </div>
+    <button class="layui-btn" id="sok" data-type="reload">搜索</button>
+</div>
+<!--表单数据-->
+<table id="roleList" lay-filter="roleFilter"></table>
+
+<!---操作-->
+<script type="text/html" id="barTpl">
+    <a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-sm" lay-event="del">删除</a>
+</script>
+
+
+<script src="/static/layui/layui.js?s=36"></script>
+<script src= "/static/js/baseConfig.js"></script>
+<script>
+    var dataId;//全局数据变量
+    layui.config({
+        base: '/static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['table','baseAjax'], function(){
+        $ = layui.jquery;
+        var table = layui.table;
+        //实例
+        table.render({
+            elem: '#roleList'
+            ,url: baseUrl + "/sys/role/list" //数据接口
+            ,page: true //开启分页
+            ,limit:10 //每页几条
+            ,even: true //开启隔行背景
+            ,cols: [[ //表头
+                 {type:'numbers'}
+                ,{field: 'roleId', title: 'ID', hide: true}
+                ,{field: 'roleName', title: '角色名称'}
+                ,{field: 'remark', title: '备注'}
+                ,{field: 'createTime', title: '创建时间'}
+                ,{title: '操作', templet:'#barTpl',fixed:"right",align:"center"},
+            ]]
+            ,parseData: function(res) { //res 即为原始返回的数据
+                    if(res.code == 0)
+                        return {
+                            "code": res.code,//解析接口状态
+                            "msg": res.msg, //解析提示文本
+                            "count": res.page.totalCount, //解析数据长度
+                            "data": res.page.list //解析数据列表
+                        };
+                    else{
+                    return {
+                        "code": res.code,//解析接口状态
+                        "msg": res.msg //解析提示文本
+                    };
+                }
+            }
+        });
+
+        //工具栏
+        var active = {
+            reload: function(){
+                var key = $("#key").val();
+                //执行重载
+                table.reload('roleList', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        key: key
+                    }
+                });
+            }
+            ,add: function(){
+                layer.open({
+                    type: 2,
+                    title: '添加角色',
+                    shadeClose: true,
+                    area: ['766px', '745px'],
+                    content: 'add.html' //iframe的url
+                });
+            }
+        };
+        //搜索回车
+        document.onkeydown = function(e){
+            var ev =document.all ? window.event : e;
+            if(ev.keyCode==13) {
+                $('#sok').trigger("click");
+                return false
+            }
+        }
+        //点击事件
+        $('.toolbar .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+
+        //监听操作栏
+        table.on('tool(roleFilter)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'edit'){
+                dataId = data.roleId;
+                layer.open({
+                    type: 2,
+                    title: '编辑用户',
+                    shadeClose: true,
+                    area: ['766px', '745px'],
+                    content: 'edit.html' //iframe的url
+                });
+            }else if(obj.event === 'del'){
+                var roleIds= [];
+                roleIds.push(data.roleId);
+                layer.confirm('确定要删除角色吗？', function(index){
+                    $.post(baseUrl + "sys/role/delete",JSON.stringify(roleIds),function(res){
+                        if(res.code == 0){
+                            layer.msg('操作成功', {
+                                offset: '15px',
+                                icon: 1,
+                                time: 1000
+                            },function(){
+                                //刷新表格
+                                table.reload('roleList');
+                            });
+                        }else{
+                            layer.msg(res.msg, {
+                                offset: '15px',
+                                icon: 5,
+                                time: 1000
+                            });
+                        }
+                    },'json');
+                });
+            }
+        });
+
+    });
+</script>
+</body>
+</html>

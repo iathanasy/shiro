@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户列表</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body>
+<!--头部工具栏-->
+<div class="toolbar">
+    <button class="layui-btn" data-type="add">添加</button>
+    <div class="layui-inline" style="margin-left: 12px">
+        <input class="layui-input" name="key" id="key" autocomplete="off" placeholder="名称或手机号">
+    </div>
+    <button class="layui-btn" id="sok" data-type="reload">搜索</button>
+</div>
+<!--表单数据-->
+<table id="userList" lay-filter="userFilter"></table>
+
+<!---操作-->
+<script type="text/html" id="barTpl">
+    {{#  if(d.status == 1){ }}
+    <a class="layui-btn layui-btn-warm layui-btn-sm" lay-event="disable">禁用</a>
+    {{#  } else { }}
+    <a class="layui-btn layui-btn-sm" lay-event="enable">启用</a>
+    {{#  } }}
+    <a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-sm" lay-event="del">删除</a>
+</script>
+
+<!--状态-->
+<script type="text/html" id="stateTpl">
+    {{#  if(d.status == 1){ }}
+    <span style="color: #5FB878;"> 正常 </span>
+    {{#  } else { }}
+    <span style="color: #FF5722;"> 禁用 </span>
+    {{#  } }}
+</script>
+
+<script src="/static/layui/layui.js?s=36"></script>
+<script src= "/static/js/baseConfig.js"></script>
+<script>
+    var dataId;//全局数据变量
+    layui.config({
+        base: '/static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['table','baseAjax'], function(){
+        $ = layui.jquery;
+        var table = layui.table;
+        //实例
+        table.render({
+            elem: '#userList'
+            ,url: baseUrl + "/sys/user/list" //数据接口
+            ,page: true //开启分页
+            ,limit:10 //每页几条
+            ,even: true //开启隔行背景
+            ,cols: [[ //表头
+                 {type:'numbers'}
+                ,{field: 'userId', title: 'ID', width:80, hide: true}
+                ,{field: 'username', title: '用户名', width:120}
+                ,{field: 'nickname', title: '昵称', width:120}
+                ,{field: 'loginCount', title: '登录次数', width:110,sort: true}
+                ,{field: 'contact', title: '联系人', width: 120}
+                ,{field: 'email', title: '邮箱', width: 100}
+                ,{field: 'mobile', title: '手机号', width:110}
+                ,{field: 'status', title: '状态', width:110, align:"center", templet: '#stateTpl'}
+                ,{field: 'lastLoginIp', title: '最近登录IP', width: 110}
+                ,{field: 'lastLoginTime', title: '最近登录时间', width: 180}
+                ,{field: 'createTime', title: '创建时间', width: 180}
+                ,{title: '操作', minWidth:180, templet:'#barTpl',fixed:"right",align:"center"},
+            ]]
+            ,parseData: function(res) { //res 即为原始返回的数据
+                    if(res.code == 0)
+                        return {
+                            "code": res.code,//解析接口状态
+                            "msg": res.msg, //解析提示文本
+                            "count": res.page.totalCount, //解析数据长度
+                            "data": res.page.list //解析数据列表
+                        };
+                    else{
+                    return {
+                        "code": res.code,//解析接口状态
+                        "msg": res.msg //解析提示文本
+                    };
+                }
+            }
+        });
+
+        //工具栏
+        var active = {
+            reload: function(){
+                var key = $("#key").val();
+                //执行重载
+                table.reload('userList', {
+                    page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        key: key
+                    }
+                });
+            }
+            ,add: function(){
+                layer.open({
+                    type: 2,
+                    title: '添加用户',
+                    shadeClose: true,
+                    area: ['766px', '745px'],
+                    content: 'add.html' //iframe的url
+                });
+            }
+        };
+        //搜索回车
+        document.onkeydown = function(e){
+            var ev =document.all ? window.event : e;
+            if(ev.keyCode==13) {
+                $('#sok').trigger("click");
+                return false
+            }
+        }
+        //点击事件
+        $('.toolbar .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+
+        //监听操作栏
+        table.on('tool(userFilter)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'edit'){
+                dataId = data.userId;
+                layer.open({
+                    type: 2,
+                    title: '编辑用户',
+                    shadeClose: true,
+                    area: ['766px', '745px'],
+                    content: 'edit.html' //iframe的url
+                });
+            }else if(obj.event === 'disable'){
+                layer.confirm('确定要禁用状态吗？', function(index){
+                    $.post(baseUrl + "sys/user/modifyStatus",JSON.stringify({'userId': data.userId,'status': 0}),function(res){
+                        if(res.code == 0){
+                            layer.msg('操作成功', {
+                                offset: '15px',
+                                icon: 1,
+                                time: 1000
+                            },function(){
+                                //刷新表格
+                                table.reload('userList');
+                            });
+                        }else{
+                            layer.msg(res.msg, {
+                                offset: '15px',
+                                icon: 5,
+                                time: 1000
+                            });
+                        }
+                    },'json');
+                });
+            }else if(obj.event === 'enable'){
+                layer.confirm('确定要启用状态吗？', function(index){
+                    $.post(baseUrl + "sys/user/modifyStatus",JSON.stringify({'userId': data.userId,'status': 1}),function(res){
+                        if(res.code == 0){
+                            layer.msg('操作成功', {
+                                offset: '15px',
+                                icon: 1,
+                                time: 1000
+                            },function(){
+                                //刷新表格
+                                table.reload('userList');
+                            });
+                        }else{
+                            layer.msg(res.msg, {
+                                offset: '15px',
+                                icon: 5,
+                                time: 1000
+                            });
+                        }
+                    },'json');
+                });
+            }else if(obj.event === 'del'){
+                var userIds= [];
+                userIds.push(data.userId);
+                layer.confirm('确定要删除用户吗？', function(index){
+                    $.post(baseUrl + "sys/user/delete",JSON.stringify(userIds),function(res){
+                        if(res.code == 0){
+                            layer.msg('操作成功', {
+                                offset: '15px',
+                                icon: 1,
+                                time: 1000
+                            },function(){
+                                //刷新表格
+                                table.reload('userList');
+                            });
+                        }else{
+                            layer.msg(res.msg, {
+                                offset: '15px',
+                                icon: 5,
+                                time: 1000
+                            });
+                        }
+                    },'json');
+                });
+            }
+        });
+
+    });
+</script>
+</body>
+</html>

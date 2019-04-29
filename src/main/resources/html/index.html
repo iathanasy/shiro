@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*" />
+    <title>首页</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+	<!--<link rel="stylesheet" href="./static/font-awesome/css/font-awesome.min.css" media="all">-->
+	<style>
+	/**隐藏首页选项卡关闭按钮*/
+	.layui-tab-title li:first-child > i {
+		display: none;
+	}
+	/**收缩菜单*/
+	.layui-side-scroll .side-fold{
+		height: 35px;
+		background-color: #4A5064;
+		color: #aeb9c2;
+		line-height: 35px;
+		text-align: center;
+		cursor: pointer
+	}
+	
+	/**@media screen and (max-width:950px) {
+	.layui-body,.layui-footer,.layui-layout-left {
+		left: 50px
+	}
+    }**/
+	
+	</style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo">权限管理系统</div>
+        <div class="layui-layout-left" style="margin-top:18px; font-size:16px; color:#FFF;" id="navSorH"><i class="layui-icon layui-icon-shrink-right"></i></div>
+        <ul class="layui-nav layui-layout-right">
+           <!-- <li class="layui-nav-item">
+                <a href="">控制台<span class="layui-badge">9</span></a>
+            </li>
+            <li class="layui-nav-item">
+                <a href="">个人中心<span class="layui-badge-dot"></span></a>
+            </li>-->
+            
+           <li class="layui-nav-item">
+               <a href="javascript:;"><span id="nickname">用户昵称</span></a>
+               <dl class="layui-nav-child"> <!-- 二级菜单 -->
+                   <dd><a href="javascript:void(0);" id="updatePass">修改密码</a></dd>
+                   <dd><a id="logout" href="javascript:;">退出系统</a></dd>
+               </dl>
+            </li>
+
+        </ul>
+    </div>
+
+    <div id="leftA" class="layui-side layui-bg-black">
+        <div class="layui-side-scroll" id="viewLeftNav">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航）第二步：建立视图。用于呈现渲染结果。 -->
+            <!--<ul class="layui-nav layui-nav-tree" lay-filter="left-menu" lay-shrink="all">
+                <li class="layui-nav-item">
+                    <a href="javascript:;"><i class="layui-icon layui-icon-set"></i>&nbsp;&nbsp;<span>菜单列表</span></a>
+                    <dl class="layui-nav-child">
+                        <dd id="A002" name="/html/lock/list.html"><a href="javascript:;">车位锁管理</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item" id="B001" name="http://www.baidu.com">
+                    <a  href="javascript:;"><i class="layui-icon layui-icon-list"></i>&nbsp;&nbsp;<span>链接</span></a>
+                </li>
+            </ul>-->
+        </div>
+    </div>
+
+    <div class="layui-body" style="bottom: 0px;">
+        <div id="nav">
+            <!-- 内容主体区域 -->
+			<!--ul的id要和lay-filter一致-->
+            <div class="layui-tab layui-tab-card" lay-allowClose="true" lay-filter="tab-switch">
+                <ul class="layui-tab-title" id="tab-switch">
+                   <li class="layui-this"><i class="layui-icon layui-icon-home"></i><span>首页</span></li>
+                </ul>
+                <div class="layui-tab-content">
+                    <div class="layui-tab-item layui-show">
+                        <iframe id="main" src="main.html" width="100%" frameborder="0" scrolling="auto"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+		
+		<div class="layui-footer" style="font-size:12px;text-align:center;width:100%;left: 10px;">
+			<!-- 底部固定区域 -->
+			2017 &copy;
+		</div>
+    </div>
+
+</div>
+
+<!--//第一步：编写模版。你可以使用一个script标签存放模板，-->
+<script id="leftNav" type="text/html">
+    <ul class="layui-nav layui-nav-tree" lay-filter="left-menu" lay-shrink="all">
+        {{#  layui.each(d.menuList, function(index, item){  }}
+        <!--- 一级菜单-->
+        <li class="layui-nav-item layui-tab-brief" id="{{ item.menuId }}" name="{{ item.url }}">
+            <a href="javascript:;"><i class="layui-icon {{ item.icon }}"></i>&nbsp;&nbsp;<span>{{ item.name }}</span></a>
+            {{# if(item.list != null){ }}
+            <!--- 二级菜单-->
+            <dl class="layui-nav-child">
+                {{# layui.each(item.list, function(index, itemch){ }}
+                <dd id="{{ itemch.menuId }}" name="{{ itemch.url }}"><a href="javascript:;"><i class="layui-icon {{ itemch.icon }}"></i>&nbsp;&nbsp;<span>{{ itemch.name }}</span></a></dd>
+                {{#  }); }}
+            </dl>
+            {{# } }}
+        </li>
+       {{#  }); }}
+    </ul>
+</script>
+
+</body>
+</html>
+
+<script src="/static/layui/layui.js?s=36"></script>
+<script src="/static/js/baseConfig.js"></script>
+<script src="/static/js/index.js"></script>
+<script >
+    layui.config({
+        base: 'static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['layer','laytpl','element','baseAjax'],function(){
+    $ = layui.jquery;
+    layer = layui.layer;
+    var laytpl = layui.laytpl;
+    var element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    //判断是否登录/判断token是否过期
+    /*var ttoken = layui.data(sysToken).token;
+    if(ttoken == null){
+        layer.msg('身份验证失败', {
+            offset: '15px',
+            icon: 3,
+            time: 1000
+        }, function () {
+            location.href ="/login.html"
+        });
+    }*/
+    //获取用户登录信息
+    var tuser = layui.data(sysUser).user;
+    if(tuser == null){
+        layer.msg('身份验证失败', {
+            offset: '15px',
+            icon: 3,
+            time: 1000
+        }, function () {
+            location.href ="/login.html"
+        });
+    }
+    $("#nickname").html(tuser.nickname);
+    //退出登录
+    $("#logout").click(function(){
+        logout("退出登录");
+    });
+
+    //修改密码
+    $("#updatePass").click(function(){
+        var name = $(this).text();
+        addTab(name,"modules/user/repass.html","SET001");
+    });
+
+    loadLeftNav();
+    function loadLeftNav(){
+        /**加载左侧动态菜单*/
+        $.post(baseUrl + "sys/menu/nav",function(res){
+
+            if(res.code == 0){
+                var data = res;
+                //第三步：渲染模版
+                var getTpl = leftNav.innerHTML
+                view = document.getElementById('viewLeftNav');
+                laytpl(getTpl).render(data, function(html){
+                    view.innerHTML = html;
+                    //必须更新渲染
+                    element.render();
+                });
+            }
+        },'json');
+    }
+
+});
+
+</script>

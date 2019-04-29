@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>修改密码</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+</head>
+<body>
+
+<form class="layui-form" lay-filter="fromRepass">
+
+    <!--<blockquote class="layui-elem-quote layui-text">
+        默认密码为：123456
+    </blockquote>-->
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">账号：</label>
+        <div class="layui-input-block">
+            <input type="hidden" name="userName" style="width: 35%;" placeholder="用户登录账号" autocomplete="off" class="layui-input">
+            <div class="layui-form-mid layui-word-aux" id="userNameText">用户名</div>
+        </div>
+
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">原密码：</label>
+        <div class="layui-input-inline">
+            <input type="password" name="oldPass" required lay-verify="pass" placeholder="请输入原密码" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">新密码：</label>
+        <div class="layui-input-inline">
+            <input type="password" name="newPass" required lay-verify="pass" placeholder="请输入新密码" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux">6到12个字符</div>
+    </div>
+    <div class="layui-form-item">
+        <label class="layui-form-label">确认密码：</label>
+        <div class="layui-input-inline">
+            <input type="password" name="repass" required lay-verify="repass" placeholder="请输入确认密码" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-form-mid layui-word-aux">确认密码和新密码保持一致</div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="submitRepass">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+</body>
+<script src="/static/layui/layui.js?s=36"></script>
+<script src="/static/js/baseConfig.js"></script>
+<script>
+    layui.config({
+        base: '/static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['form','layer','baseAjax'], function(){
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        //赋值用户名
+        form.val("fromRepass",{
+            "userName": tuser.username
+        });
+        $("#userNameText").html(tuser.username);
+
+        //自定义校验规则
+        form.verify({
+            //密码
+            pass: [
+                /^[\S]{6,12}$/
+                ,'密码必须6到12位，且不能出现空格'
+            ]
+            //确认密码
+            ,repass: function(value, item){//value：表单的值、item：表单的DOM对象
+                //新密码
+                var newPass = $('input[name=newPass]').val();
+                if(value != newPass){
+                    return '两次输入的密码不一致!';
+                }
+            }
+        });
+        //监听提交
+        form.on('submit(submitRepass)', function(data){
+            //console.log(data.field);
+            $.ajax({
+                url: baseUrl + "sys/user/password",
+                contentType: "application/x-www-form-urlencoded;charset=utf-8",
+                data: data.field,
+                success: function (res) {
+                    if (res.code == 0) {
+                        layer.msg('修改成功', {
+                            offset: '15px',
+                            icon: 1,
+                            time: 1000
+                        }, function () {
+                            //删除指定Tab项
+                            parent.element.tabDelete('tab-switch', 'SET001'); //删除：“修改密码”
+                        });
+                    }/*else{
+                        layer.msg(res.msg, {
+                            offset: '15px',
+                            icon: 5,
+                            time: 1000
+                        });
+                    }*/
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>添加角色</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/eleTree.css">
+</head>
+<body>
+
+<form class="layui-form" lay-filter="roleFrom" style="margin-top: 20px;">
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+        <legend>添加角色</legend>
+    </fieldset>
+    <div class="layui-form-item">
+        <label class="layui-form-label">角色名称：</label>
+        <div class="layui-input-block">
+            <input type="text" style="width: 80%;" name="roleName" lay-verify="required" autocomplete="off" placeholder="请输入名称" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">描述：</label>
+        <div class="layui-input-block">
+            <textarea name="remark" style="width: 80%;" placeholder="请输入描述" class="layui-textarea"></textarea>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <label class="layui-form-label">角色权限：</label>
+        <div class="layui-input-block" id="menuTree" lay-filter="tree">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="save">立即提交</button>
+           <!-- <button type="reset" class="layui-btn layui-btn-primary">重置</button>-->
+        </div>
+    </div>
+</form>
+<script src="/static/layui/layui.js?s=36"></script>
+<script src= "/static/js/baseConfig.js"></script>
+<script>
+    layui.config({
+        base: '/static/module/' //你存放新模块的目录，注意，不是layui的模块目录
+    }).use(['form','layer','baseAjax','eleTree'], function(){
+        var form = layui.form;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var eleTree = layui.eleTree;
+        var menuIdList =[];//不管是哪个角色都拥有修改密码的权限
+        var el;
+        //页面一打开就执行弹层
+        layer.ready(function(){
+            //加载菜单树
+            el = eleTree.render({
+                elem: '#menuTree',
+                //data: data,
+                url: baseUrl + "sys/menu/tree",
+                showCheckbox: true, // 节点是否可被选择
+                //defaultExpandAll: true, // 是否默认展开所有节点
+                defaultCheckedKeys: menuIdList, // 默认勾选的节点的 key 的数组
+                defaultExpandedKeys: menuIdList,    // 默认展开的节点的 key 的数组
+                checkStrictly: false, //  在显示复选框的情况下，是否严格的遵循父子不互相关联的做法，默认为 false
+                accordion: true, //是否每次只打开一个同级树节点展开（手风琴效果）
+                response: {   // 对于后台数据重新定义名字
+                    statusName: "code",
+                    statusCode: 0,
+                    dataName: "tree"
+                },
+                request: {     // 对后台返回的数据格式重新定义
+                    name: "name",
+                    key: "menuId",
+                    children: "list",
+                },
+            });
+        });
+
+        // input被选中事件
+        /*eleTree.on("nodeChecked(tree)",function(d) {
+            console.log(d.data);    // 点击节点对于的数据
+            console.log(d.isChecked);   // input是否被选中
+        })*/
+
+        //监听提交
+        form.on('submit(save)', function(data){
+            var menuIdList = el.getChecked(false, true);// 获取选中的节点，接收两个 boolean 类型的参数，1. 是否只是叶子节点，默认值为 false 2. 是否包含半选节点，默认值为 false
+            var list = [];
+            layui.each(menuIdList, function(indx, item){
+                list.push(item.menuId);
+            });
+            //console.log(list);
+            var json =  data.field;
+            json.menuIdList = list;
+            //console.log(json);
+            $.ajax({
+                type: "POST",
+                url: baseUrl + "sys/role/save",
+                contentType: "application/json",
+                data: JSON.stringify(json),
+                success: function(res){
+                    if(res.code == 0){
+                        layer.msg('添加成功', {
+                            offset: '15px',
+                            icon: 1,
+                            time: 1000
+                        }, function () {
+                            //关闭弹窗
+                            parent.layer.closeAll();
+                            //刷新父页面
+                            parent.location.reload();
+                        });
+                    }else{
+                        layer.msg(res.msg, {
+                            offset: '15px',
+                            icon: 5,
+                            time: 1000
+                        });
+                    }
+                }
+            });
+            return false;
+        });
+
+    });
+</script>
+</body>
+</html>
