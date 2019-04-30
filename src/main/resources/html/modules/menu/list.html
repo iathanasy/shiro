@@ -33,6 +33,7 @@
         var table = layui.table;
         var form = layui.form;
         var treeTable = layui.treeTable;
+
         //实例
         var re = treeTable.render({
             elem: '#menuList'
@@ -113,8 +114,9 @@
                     type: 2,
                     title: '添加菜单',
                     shadeClose: true,
-                    area: ['766px', '745px'],
+                    area: ['745px','85%'],
                     content: 'add.html' //iframe的url
+
                 });
             }
             //全部展开
@@ -141,8 +143,9 @@
                 type: 2,
                 title: '编辑菜单',
                 shadeClose: true,
-                area: ['766px', '745px'],
+                area: ['745px','85%'],
                 content: 'edit.html' //iframe的url
+
             });
         });
         // 监听操作删除
