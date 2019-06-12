@@ -77,11 +77,6 @@
     </div>
 </form>
 
-<!-- 选择菜单 -->
-<div id="menuLayer" style="display: none;padding:10px;">
-    <div id="selectTree" lay-filter="tree"></div>
-</div>
-
 <script src="/static/layui/layui.js?s=36"></script>
 <script src= "/static/js/baseConfig.js"></script>
 <script>
@@ -140,7 +135,7 @@
             offset: '50px',
             skin: 'layui-layer-molv',
             title: "选择菜单",
-            area: ['300px', '450px'],
+            area: ['300px', '80%'],
             shade: 0,
             shadeClose: false,
             content: $("#menuLayer"),
@@ -201,4 +196,9 @@
     });
 </script>
 </body>
+<!-- 选择菜单 -->
+<div id="menuLayer" style="display: none;padding:10px;">
+    <div id="selectTree" lay-filter="tree"></div>
+</div>
+
 </html>
